@@ -1,13 +1,10 @@
 const express = require("express");
 const { Op } = require("sequelize");
 const Region = require("../models/region");
-const regionValidation = require("../validation/region")
-
 const router = express.Router();
 
 router.post("/", async (req, res) => {
     try {
-        const { name } = regionValidation.req.body;
         if (!name) return res.status(400).json({ message: "Region name is required" });
 
         const region = await Region.create({ name });
