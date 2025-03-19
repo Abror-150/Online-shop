@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const express = require("express")
 const {connectedDb} = require("./config/db")
 const UserRoute = require("./routes/user")
@@ -16,3 +15,5 @@ app.use("/comment",CommentRoute)
 app.use("/region",RegionRoute)
 app.use("/order",OrderRoute)
 app.use("/category",CategoryRoute)
+
+app.listen(3000, () => console.log("server started"));
