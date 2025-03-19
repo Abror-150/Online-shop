@@ -14,3 +14,4 @@ app.use("/comments", CommentRoutes);
 app.use("/categories", CategoryRoutes);
 app.use("/regions", RegionRoutes);
 app.listen(3000, () => console.log("server started"));
+
