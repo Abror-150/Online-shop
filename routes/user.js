@@ -9,7 +9,7 @@ const {
   getToken,
   refreshToken,
   sendSms,
-} = require("../functions/user");
+} = require("../functions/eskiz");
 const route = Router()
 
 route.get("/", async (req, res) => {

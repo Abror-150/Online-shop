@@ -2,6 +2,7 @@ const express = require("express");
 const Product = require("../models/product");
 const User = require("../models/user");
 const Category = require("../models/category");
+const roleAuthMiddleware = require("../middlewares/auth");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -18,9 +19,17 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    const userId = req.user.id;
+    const product = await Product.create({
+      userId,
+      name,
+      description,
+      image,
+      price,
+      categoryId,
+    });
     res.json(product);
   } catch (error) {
     res.status(400).json({ error: "Ma'lumot noto‘g‘ri kiritilgan" });
