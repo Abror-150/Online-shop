@@ -1,5 +1,6 @@
 const express = require("express");
 const { Op } = require("sequelize");
+const categoryValidation = require("../validation/category")
 const Category = require("../models/category");
 const router = express.Router();
 const roleAuthMiddleware = require("../middlewares/auth");
@@ -31,6 +32,10 @@ router.get("/", async (req, res) => {
 
 router.post("/", roleAuthMiddleware(["admin"]), async (req, res) => {
   try {
+    let {error} = categoryValidation.validate(req.body)
+    if(error){
+      return res.status({error:error.details[0].message})
+    }
     if (!req.body.name) {
       return res
         .status(400)
