@@ -42,6 +42,34 @@ router.get("/", async (req, res) => {
   }
 });
 
+// router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const { name, description, image, price, categoryId } = req.body;
+
+//     if (!name || !price || !categoryId) {
+//       return res
+//         .status(400)
+//         .json({ error: "Majburiy maydonlar to‘ldirilishi kerak" });
+//     }
+
+//     const product = await Product.create({
+//       userId,
+//       name,
+//       description,
+//       image,
+//       price,
+//       categoryId,
+//     });
+
+//     res.status(201).json(product);
+//   } catch (error) {
+//     res
+//       .status(400)
+//       .json({ error: "Ma'lumot noto‘g‘ri kiritilgan", details: error.message });
+//   }
+// });
+
 router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
   try {
     const userId = req.user.id;

@@ -2,13 +2,23 @@ const express = require("express");
 const Product = require("../models/product");
 const User = require("../models/user");
 const router = express.Router();
-const Comment = require("../models/comment")
+const Comment = require("../models/comment");
+const { Op } = require("sequelize");
 router.get("/", async (req, res) => {
   try {
+    let filter = {};
+    let { star, message } = req.query;
+    if (star) {
+      filter.star = { [Op.like]: `${star}%` };
+    }
+    if (message) {
+      filter.message = { [Op.like]: `${message}%` };
+    }
     const comments = await Comment.findAll({
+      where: filter,
       include: [
-        { model: User, attributes: ["id", "userName", "email"] }, 
-        { model: Product, attributes: ["id", "name", "price"] }, 
+        { model: User, attributes: ["id", "userName", "email"] },
+        { model: Product, attributes: ["id", "name", "price"] },
       ],
     });
     res.json(comments);
@@ -27,10 +37,9 @@ router.post("/", async (req, res) => {
 router.patch("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const one = await Comment.findByPk(id)
-    await one.update(req.body)
-    res.send(one)
- 
+    const one = await Comment.findByPk(id);
+    await one.update(req.body);
+    res.send(one);
   } catch (error) {
     res.status(500).json({ error: "Server xatosi" });
   }

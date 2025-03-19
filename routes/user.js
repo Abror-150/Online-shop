@@ -17,8 +17,6 @@ route.get("/", async (req, res) => {
     // userLogger.log("info", "GET ishladi");
     res.send(data);
   });
-
-
   route.post("/send-otp", async (req, res) => {
     let { phone } = req.body;
     try {
@@ -34,7 +32,6 @@ route.get("/", async (req, res) => {
       console.log(error);
     }
   });
-
   route.post("/verify-otp", async (req, res) => {
     let { otp, phone } = req.body;
     try {

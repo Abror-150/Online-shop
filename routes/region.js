@@ -37,26 +37,14 @@ router.get("/", async (req, res) => {
 });
 
 
-router.get("/:id", async (req, res) => {
-    try {
-        const region = await Region.findByPk(req.params.id);
-        if (!region) return res.status(404).json({ message: "Region not found" });
-
-        res.json(region);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
 router.patch("/:id", async (req, res) => {
     try {
-        const { name } = req.body;
         const region = await Region.findByPk(req.params.id);
         
         if (!region) return res.status(404).json({ message: "Region not found" });
 
-        region.name = name || region.name;
-        await region.save();
+       await region.create(req.body)
+       res.send(region)
 
         res.json({ message: "Region updated successfully", region });
     } catch (error) {
