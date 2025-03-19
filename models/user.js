@@ -1,54 +1,51 @@
-const { DataTypes } = require('sequelize');
-const {db} = require('../config/db'); 
-const Region = require('./region'); 
+const { DataTypes } = require("sequelize");
+const { db } = require("../config/db");
+const Region = require("./region");
 
-const User = db.define('User', {
+const User = db.define(
+  "User",
+  {
     id: {
-        type: DataTypes.INTEGER,
-        autoIncrement:true,
-        primaryKey:true
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
     },
     userName: {
-        type:DataTypes.STRING,
-        allowNull: false,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     password: {
-        type: DataTypes.STRING,
-        allowNull: false,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     regionId: {
-        type: DataTypes.INTEGER,
-        // references: {
-        //     model: Region,
-        //     key: 'id',
-        // },
+      type: DataTypes.INTEGER,
     },
     role: {
-        type: DataTypes.ENUM('admin', 'user', 'super_admin',"sellir"),
-        defaultValue: 'user',
+      type: DataTypes.ENUM("admin", "user", "super_admin", "sellir"),
+      defaultValue: "user",
     },
     email: {
-        type: DataTypes.STRING,
-        allowNull: false,
-       
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     phone: {
-        type: DataTypes.STRING,
-        allowNull: false,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     image: {
-        type: DataTypes.STRING, 
-        allowNull: true,
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     year: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
-}, 
-{timestamps:false}
+  },
+  { timestamps: false }
 );
 
-// User.belongsTo(Region, { foreignKey: 'regionId' });
-// Region.hasMany(User, { foreignKey: 'regionId' });
+User.belongsTo(Region, { foreignKey: "regionId" });
+Region.hasMany(User, { foreignKey: "regionId" });
 
 module.exports = User;
