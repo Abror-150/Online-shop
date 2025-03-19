@@ -2,6 +2,7 @@ const express = require("express");
 const { Op } = require("sequelize");
 const Category = require("../models/category");
 const router = express.Router();
+const roleAuthMiddleware = require("../middlewares/auth");
 
 router.get("/", async (req, res) => {
   try {
@@ -17,9 +18,9 @@ router.get("/", async (req, res) => {
 
     const categories = await Category.findAll({
       where: whereClause,
-      order: [[sortBy, order.toUpperCase()]], 
+      order: [[sortBy, order.toUpperCase()]],
       limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit), 
+      offset: (parseInt(page) - 1) * parseInt(limit),
     });
 
     res.json(categories);
@@ -28,7 +29,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", roleAuthMiddleware(["admin"]), async (req, res) => {
   try {
     if (!req.body.name) {
       return res
@@ -44,23 +45,27 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.patch("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const [updated] = await Category.update(req.body, { where: { id } });
+router.patch(
+  "/:id",
+  roleAuthMiddleware(["super_admin", "admin"]),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const [updated] = await Category.update(req.body, { where: { id } });
 
-    if (updated) {
-      const updatedCategory = await Category.findByPk(id);
-      return res.json(updatedCategory);
+      if (updated) {
+        const updatedCategory = await Category.findByPk(id);
+        return res.json(updatedCategory);
+      }
+
+      res.status(404).json({ error: "Kategoriya topilmadi" });
+    } catch (error) {
+      res.status(500).json({ error: "Server xatosi", details: error.message });
     }
-
-    res.status(404).json({ error: "Kategoriya topilmadi" });
-  } catch (error) {
-    res.status(500).json({ error: "Server xatosi", details: error.message });
   }
-});
+);
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", roleAuthMiddleware(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await Category.destroy({ where: { id } });
