@@ -12,8 +12,6 @@ const {
 } = require("../functions/user");
 const route = Router()
 
-
-
 route.get("/", async (req, res) => {
     let data = await User.findAll();
     // userLogger.log("info", "GET ishladi");
@@ -50,7 +48,6 @@ route.get("/", async (req, res) => {
       console.log(error);
     }
   });
-
   route.post("/verify-email", async (req, res) => {
     let { otp, email } = req.body;
     try {
