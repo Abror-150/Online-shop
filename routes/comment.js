@@ -2,10 +2,22 @@ const express = require("express");
 const Product = require("../models/product");
 const User = require("../models/user");
 const router = express.Router();
-const Comment = require("../models/comment")
+const Comment = require("../models/comment");
+const { Op } = require("sequelize");
 router.get("/", async (req, res) => {
+
   try {
-    const comments = await Comment.findAll({
+    let filter = {}
+    let  {star,message} = req.query
+    if(star){
+        filter.star = {[Op.like]:`${star}%`}
+
+    }
+    if(message){
+        filter.message = {[Op.like]:`${message}%`}
+
+    }
+    const comments = await Comment.findAll({where:filter,
       include: [
         { model: User, attributes: ["id", "userName", "email"] }, 
         { model: Product, attributes: ["id", "name", "price"] }, 

@@ -17,13 +17,12 @@ router.get("/", async (req, res) => {
     res.status(500).json({ error: "Server xatosi" });
   }
 });
-
 router.post("/", async (req, res) => {
   try {
     const product = await Product.create(req.body);
     res.json(product);
   } catch (error) {
-    res.status(400).json({ error: "Ma'lumot noto‘g‘ri kiritilgan" });
+    res.status(400).json({ error: "Ma'lumot noto'g'ri kiritilgan" });
   }
 });
 
