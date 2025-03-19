@@ -81,19 +81,16 @@ router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
     const userId = req.user.id;
     const { name, description, image, price, categoryId } = req.body;
 
-    // Majburiy maydonlarni tekshirish
     if (!name || !price || !categoryId) {
       return res
         .status(400)
         .json({ error: "Majburiy maydonlar to‘ldirilishi kerak" });
     }
 
-    // Narx musbat son ekanligini tekshirish
     if (isNaN(price) || price <= 0) {
       return res.status(400).json({ error: "Narx musbat son bo‘lishi kerak" });
     }
 
-    // Rasm URL bo‘lishini tekshirish
     if (image && typeof image !== "string") {
       return res.status(400).json({ error: "Rasm noto‘g‘ri formatda" });
     }
@@ -101,15 +98,15 @@ router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
     const product = await Product.create({
       userId,
       name,
-      description: description || "", // Agar description bo‘lmasa, bo‘sh string qo‘yiladi
-      image: image || null, // Agar rasm yo‘q bo‘lsa, `null` qo‘yiladi
+      description: description || "", 
+      image: image || null, 
       price,
       categoryId,
     });
 
     res.status(201).json(product);
   } catch (error) {
-    console.error("❌ Mahsulot yaratishda xatolik:", error);
+    console.error(" Mahsulot yaratishda xatolik:", error);
     res.status(500).json({ error: "Server xatosi", details: error.message });
   }
 });
