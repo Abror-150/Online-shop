@@ -1,10 +1,84 @@
 const express = require("express");
 const { Op } = require("sequelize");
-const categoryValidation = require("../validation/category")
 const Category = require("../models/category");
 const router = express.Router();
 const roleAuthMiddleware = require("../middlewares/auth");
+const { categorySchema } = require("../validation/category");
 
+/**
+ * @swagger
+ * tags:
+ *   name: Category
+ *   description: Kategoriya bilan ishlash uchun API
+ */
+
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *   schemas:
+ *     Category:
+ *       type: object
+ *       required:
+ *         - name
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: Kategoriya nomi
+ *       example:
+ *         name: Elektronika
+ */
+
+/**
+ * @swagger
+ * /category:
+ *   get:
+ *     summary: Barcha kategoriyalarni olish
+ *     tags: [Category]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Kategoriya nomi bo‘yicha qidirish
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Saralash mezoni
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           default: ASC
+ *         description: Saralash tartibi (ASC/DESC)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Sahifa raqami
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Bir sahifada nechta element bo‘lishi kerak
+ *     responses:
+ *       200:
+ *         description: Kategoriyalar ro‘yxati
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Category'
+ */
 router.get("/", async (req, res) => {
   try {
     const {
@@ -30,18 +104,39 @@ router.get("/", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /category:
+ *   post:
+ *     summary: Yangi kategoriya qo‘shish
+ *     tags: [Category]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Category'
+ *     responses:
+ *       201:
+ *         description: Yangi kategoriya yaratildi
+ *       400:
+ *         description: Xatolik, noto‘g‘ri so‘rov
+ */
 router.post("/", roleAuthMiddleware(["admin"]), async (req, res) => {
   try {
-    let {error} = categoryValidation.validate(req.body)
-    if(error){
-      return res.status({error:error.details[0].message})
+    const { error } = categorySchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
     }
+    const { name } = req.body;
     if (!req.body.name) {
       return res
         .status(400)
         .json({ error: "Kategoriya nomi kiritilishi kerak" });
     }
-    const category = await Category.create(req.body);
+    const category = await Category.create({ name });
     res.status(201).json(category);
   } catch (error) {
     res
@@ -50,6 +145,33 @@ router.post("/", roleAuthMiddleware(["admin"]), async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /category/{id}:
+ *   patch:
+ *     summary: Kategoriya ma'lumotlarini yangilash
+ *     tags: [Category]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Kategoriya ID si
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Category'
+ *     responses:
+ *       200:
+ *         description: Kategoriya muvaffaqiyatli yangilandi
+ *       404:
+ *         description: Kategoriya topilmadi
+ */
 router.patch(
   "/:id",
   roleAuthMiddleware(["super_admin", "admin"]),
@@ -70,6 +192,27 @@ router.patch(
   }
 );
 
+/**
+ * @swagger
+ * /category/{id}:
+ *   delete:
+ *     summary: Kategoriya o‘chirish
+ *     tags: [Category]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: O‘chirilayotgan kategoriya ID si
+ *     responses:
+ *       200:
+ *         description: Kategoriya muvaffaqiyatli o‘chirildi
+ *       404:
+ *         description: Kategoriya topilmadi
+ */
 router.delete("/:id", roleAuthMiddleware(["admin"]), async (req, res) => {
   try {
     const { id } = req.params;

@@ -22,7 +22,7 @@ const User = db.define(
       type: DataTypes.INTEGER,
     },
     role: {
-      type: DataTypes.ENUM("admin", "user", "super_admin", "sellir"),
+      type: DataTypes.ENUM("admin", "user", "super_admin", "seller"),
       defaultValue: "user",
     },
     email: {

@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../config/db");
+const User = require("./user");
 
 const Order = db.define(
   "Order",
@@ -10,7 +11,7 @@ const Order = db.define(
       primaryKey: true,
     },
     userId: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   },
