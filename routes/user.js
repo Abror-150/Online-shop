@@ -10,6 +10,10 @@ const {
   refreshToken,
   sendSms,
 } = require("../functions/eskiz");
+const Order = require("../models/order");
+const OrderItem = require("../models/orderItem");
+const Product = require("../models/product");
+const roleAuthMiddleware = require("../middlewares/auth");
 const route = Router();
 
 /**
@@ -271,6 +275,125 @@ route.post("/refresh", async (req, res) => {
     console.log(error);
   }
 });
+
+
+/**
+ * @swagger
+ * /user/{id}/orders:
+ *   get:
+ *     summary: Userga tegishli orderlarni olish
+ *     description: Berilgan user ID bo‘yicha barcha orderlarni va ularga tegishli orderItems-larni qaytaradi.
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: User ID-si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Userga tegishli orderlar
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   status:
+ *                     type: string
+ *                     example: "completed"
+ *                   userId:
+ *                     type: integer
+ *                     example: 2
+ *                   orderItems:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                           example: 10
+ *                         quantity:
+ *                           type: integer
+ *                           example: 2
+ *                         product:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                               example: 5
+ *                             name:
+ *                               type: string
+ *                               example: "Laptop"
+ *                             price:
+ *                               type: integer
+ *                               example: 1200
+ *       404:
+ *         description: User yoki orderlar topilmadi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User yoki orderlar topilmadi"
+ *       500:
+ *         description: Server xatosi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Server xatosi"
+ *                 details:
+ *                   type: string
+ *                   example: "Some error message"
+ */
+route.get("/:id/orders", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User topilmadi" });
+    }
+
+    const orders = await Order.findAll({
+      where: { userId: id },
+      include: [
+        {
+          model: OrderItem,
+          include: [
+            {
+              model: Product,
+              attributes: ["id", "name", "price"],
+            },
+          ],
+        },
+      ],
+    });
+
+    console.log("User orderlari:", orders); 
+
+    res.json(orders);
+  } catch (error) {
+    console.error("Xatolik:", error); 
+    res.status(500).json({ error: "Server xatosi", details: error.message });
+  }
+});
+
+
+
 /**
  * @swagger
  * /user/{id}:
@@ -295,9 +418,158 @@ route.post("/refresh", async (req, res) => {
  *         description: Foydalanuvchi muvaffaqiyatli yangilandi
  */
 
+
+
+route.patch("/:id", async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    await user.update(req.body);
+    res.json({ message: "User updated successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 /**
  * @swagger
- * /users/{id}:
+ * /user/{id}:
+ *   delete:
+ *     summary: Foydalanuvchini o‘chirish
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Foydalanuvchi ID si
+ *     responses:
+ *       200:
+ *         description: Foydalanuvchi muvaffaqiyatli o‘chirildi
+ */
+route.delete("/:id", async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    await user.destroy();
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /user/myOrder:
+ *   get:
+ *     summary: Foydalanuvchining buyurtmalarini olish
+ *     description: Kirgan foydalanuvchining barcha buyurtmalarini va ularga tegishli orderItems-larni qaytaradi.
+ *     tags:
+ *        [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Foydalanuvchining buyurtmalari
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   status:
+ *                     type: string
+ *                     example: "completed"
+ *                   userId:
+ *                     type: integer
+ *                     example: 2
+ *                   orderItems:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                           example: 10
+ *                         quantity:
+ *                           type: integer
+ *                           example: 2
+ *                         product:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: integer
+ *                               example: 5
+ *                             name:
+ *                               type: string
+ *                               example: "Laptop"
+ *                             price:
+ *                               type: integer
+ *                               example: 1200
+ *       401:
+ *         description: Avtorizatsiya talab qilinadi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token yo‘q yoki noto‘g‘ri"
+ *       403:
+ *         description: Ruxsat yo‘q
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Sizga ruxsat berilmagan"
+ *       500:
+ *         description: Server xatosi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Server xatosi"
+ *                 details:
+ *                   type: string
+ *                   example: "Some error message"
+ */
+
+
+route.get("/myOrder",roleAuthMiddleware(['admin',"user"]),async(req,res)=>{
+  try {
+    const userId = req.user.id
+    console.log(userId);
+    
+    let data = await Order.findAll({where:{userId}, include:[{model:OrderItem, include:[{model:Product, attributes:["id","name","price"]}]}]})
+    if (data.length == 0) {
+      return res.status(404).json({ message: "Sizga tegishli buyurtmalar topilmadi" });
+    }
+    res.send(data)
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+
+  }
+  
+})
+
+/**
+ * @swagger
+ * /user/{id}:
  *   get:
  *     summary: User ID bo'yicha olish
  *     description: Berilgan ID bo‘yicha userni qaytaradi.
@@ -360,7 +632,7 @@ route.get("/:id", async (req, res) => {
     let user = await User.findByPk(id);
 
     if (!user) {
-      return res.status(404).json({ error: "User topilmadi" });
+      return res.status(404).json({ error: "Userr topilmadi" });
     }
 
     res.json(user);
@@ -369,47 +641,5 @@ route.get("/:id", async (req, res) => {
   }
 });
 
-
-
-route.patch("/:id", async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    await user.update(req.body);
-    res.json({ message: "User updated successfully", user });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-/**
- * @swagger
- * /user/{id}:
- *   delete:
- *     summary: Foydalanuvchini o‘chirish
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Foydalanuvchi ID si
- *     responses:
- *       200:
- *         description: Foydalanuvchi muvaffaqiyatli o‘chirildi
- */
-route.delete("/:id", async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    await user.destroy();
-    res.json({ message: "User deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 module.exports = route;
