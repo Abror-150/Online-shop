@@ -48,23 +48,10 @@ const router = express.Router();
  *         description: Yangi hudud yaratildi
  */
 router.post("/", async (req, res) => {
-<<<<<<< HEAD
-    try {
-<<<<<<< HEAD
-=======
-        if (!name) return res.status(400).json({ message: "Region name is required" });
-
->>>>>>> b080c4a9b60ae07164837fbc549bc2d266a6c5f7
-        const region = await Region.create({ name });
-        res.status(201).json({ message: "Region created successfully", region });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-=======
   try {
     const { error } = regionSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
->>>>>>> db30dcb (swagger added)
     }
     const { name } = req.body;
     if (!name)

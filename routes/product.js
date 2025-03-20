@@ -17,11 +17,6 @@ const router = express.Router();
 /**
  * @swagger
  * components:
- *   securitySchemes:
- *     BearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
  *   schemas:
  *     Product:
  *       type: object
@@ -32,7 +27,7 @@ const router = express.Router();
  *       properties:
  *         id:
  *           type: integer
- *           description: Mahsulot ID si
+ *           description: Mahsulotning unikal ID si
  *         name:
  *           type: string
  *           description: Mahsulot nomi
@@ -41,27 +36,26 @@ const router = express.Router();
  *           description: Mahsulot tavsifi
  *         image:
  *           type: string
- *           description: Mahsulot rasmi URL
+ *           description: Mahsulot rasmi URL manzili
  *         price:
  *           type: number
  *           description: Mahsulot narxi
  *         categoryId:
  *           type: integer
- *           description: Kategoriya ID si
+ *           description: Mahsulot kategoriyasi ID si
  *       example:
  *         id: 1
- *         name: "Smartfon"
- *         description: "Yangi model smartfon"
+ *         name: "Laptop"
+ *         description: "Yangi zamonaviy laptop"
  *         image: "https://example.com/image.jpg"
- *         price: 500
- *         categoryId: 3
+ *         price: 1200.50
+ *         categoryId: 2
  */
-
 /**
  * @swagger
  * /product:
  *   get:
- *     summary: Barcha mahsulotlarni olish
+ *     summary: Barcha mahsulotlarni olish (filter, sort, pagination bilan)
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -74,6 +68,38 @@ const router = express.Router();
  *         schema:
  *           type: integer
  *         description: Mahsulot kategoriyasi ID si
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *         description: Minimal narx filtri
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *         description: Maksimal narx filtri
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [name, price, createdAt]
+ *         description: Sort qilish maydoni
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [ASC, DESC]
+ *         description: Sort tartibi
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Sahifa raqami
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Har bir sahifadagi mahsulotlar soni
  *     responses:
  *       200:
  *         description: Mahsulotlar ro‘yxati
@@ -83,6 +109,8 @@ router.get("/", async (req, res) => {
     const {
       search,
       categoryId,
+      minPrice,
+      maxPrice,
       sortBy = "createdAt",
       order = "DESC",
       page = 1,
@@ -90,13 +118,17 @@ router.get("/", async (req, res) => {
     } = req.query;
 
     const whereClause = {};
-    if (search) {
-      whereClause.name = { [Op.like]: `%${search}%` };
-    }
-    if (categoryId) {
-      whereClause.categoryId = categoryId;
-    }
+    if (search) whereClause.name = { [Op.like]: `%${search}%` };
+    if (categoryId) whereClause.categoryId = categoryId;
+    if (minPrice) whereClause.price = { [Op.gte]: parseFloat(minPrice) };
+    if (maxPrice)
+      whereClause.price = {
+        ...whereClause.price,
+        [Op.lte]: parseFloat(maxPrice),
+      };
 
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const totalProducts = await Product.count({ where: whereClause });
     const products = await Product.findAll({
       where: whereClause,
       include: [
@@ -105,15 +137,19 @@ router.get("/", async (req, res) => {
       ],
       order: [[sortBy, order.toUpperCase()]],
       limit: parseInt(limit),
-      offset: (parseInt(page) - 1) * parseInt(limit),
+      offset,
     });
 
-    res.json(products);
+    res.json({
+      total: totalProducts,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      products,
+    });
   } catch (error) {
     res.status(500).json({ error: "Server xatosi", details: error.message });
   }
 });
-
 /**
  * @swagger
  * /product:
@@ -131,6 +167,10 @@ router.get("/", async (req, res) => {
  *     responses:
  *       201:
  *         description: Yangi mahsulot yaratildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
  */
 router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
   try {
@@ -140,12 +180,6 @@ router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
     }
     const userId = req.user.id;
     const { name, description, image, price, categoryId } = req.body;
-
-    if (!name || !price || !categoryId) {
-      return res
-        .status(400)
-        .json({ error: "Majburiy maydonlar to‘ldirilishi kerak" });
-    }
 
     const product = await Product.create({
       userId,
@@ -178,7 +212,7 @@ router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
  *         required: true
  *         schema:
  *           type: integer
- *         description: Mahsulot ID si
+ *         description: Yangilanayotgan mahsulotning ID si
  *     requestBody:
  *       required: true
  *       content:
@@ -188,6 +222,10 @@ router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
  *     responses:
  *       200:
  *         description: Mahsulot muvaffaqiyatli yangilandi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Product'
  */
 router.put(
   "/:id",
@@ -228,10 +266,12 @@ router.put(
  *         required: true
  *         schema:
  *           type: integer
- *         description: Mahsulot ID si
+ *         description: O‘chirilayotgan mahsulotning ID si
  *     responses:
  *       200:
  *         description: Mahsulot muvaffaqiyatli o‘chirildi
+ *       404:
+ *         description: Mahsulot topilmadi
  */
 router.delete(
   "/:id",
