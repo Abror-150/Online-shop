@@ -12,6 +12,28 @@ const router = express.Router();
  *   name: Products
  *   description: Mahsulotlar bilan ishlash API
  */
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       required:
+ *         - name
+ *         - price
+ *         - categoryId
+ *       properties:
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         image:
+ *           type: string
+ *         price:
+ *           type: number
+ *         categoryId:
+ *           type: integer
+ */
 
 /**
  * @swagger
