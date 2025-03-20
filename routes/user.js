@@ -276,7 +276,6 @@ route.post("/refresh", async (req, res) => {
   }
 });
 
-
 /**
  * @swagger
  * /user/{id}/orders:
@@ -383,16 +382,13 @@ route.get("/:id/orders", async (req, res) => {
       ],
     });
 
-    console.log("User orderlari:", orders); 
 
     res.json(orders);
   } catch (error) {
-    console.error("Xatolik:", error); 
+    console.error("Xatolik:", error);
     res.status(500).json({ error: "Server xatosi", details: error.message });
   }
 });
-
-
 
 /**
  * @swagger
@@ -417,8 +413,6 @@ route.get("/:id/orders", async (req, res) => {
  *       200:
  *         description: Foydalanuvchi muvaffaqiyatli yangilandi
  */
-
-
 
 route.patch("/:id", async (req, res) => {
   try {
@@ -548,24 +542,34 @@ route.delete("/:id", async (req, res) => {
  *                   example: "Some error message"
  */
 
+route.get(
+  "/myOrder",
+  roleAuthMiddleware(["admin", "user"]),
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      console.log(userId);
 
-route.get("/myOrder",roleAuthMiddleware(['admin',"user"]),async(req,res)=>{
-  try {
-    const userId = req.user.id
-    console.log(userId);
-    
-    let data = await Order.findAll({where:{userId}, include:[{model:OrderItem, include:[{model:Product, attributes:["id","name","price"]}]}]})
-    if (data.length == 0) {
-      return res.status(404).json({ message: "Sizga tegishli buyurtmalar topilmadi" });
+      let data = await Order.findAll({
+        where: { userId },
+        include: [
+          {
+            model: OrderItem,
+            include: [{ model: Product, attributes: ["id", "name", "price"] }],
+          },
+        ],
+      });
+      if (data.length == 0) {
+        return res
+          .status(404)
+          .json({ message: "Sizga tegishli buyurtmalar topilmadi" });
+      }
+      res.send(data);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
-    res.send(data)
-
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-
   }
-  
-})
+);
 
 /**
  * @swagger
@@ -640,6 +644,5 @@ route.get("/:id", async (req, res) => {
     res.status(500).json({ error: "Server xatosi", details: error.message });
   }
 });
-
 
 module.exports = route;
