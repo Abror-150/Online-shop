@@ -18,7 +18,35 @@ const route = Router();
  *   name: Users
  *   description: Foydalanuvchilar bilan ishlash API
  */
-
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - userName
+ *         - email
+ *         - password
+ *         - phone
+ *       properties:
+ *         userName:
+ *           type: string
+ *         email:
+ *           type: string
+ *         password:
+ *           type: string
+ *         role:
+ *           type: string
+ *         regionId:
+ *           type: integer
+ *         phone:
+ *           type: string
+ *         image:
+ *           type: string
+ *         year:
+ *           type: integer
+ */
 /**
  * @swagger
  * /user:
@@ -307,9 +335,5 @@ route.delete("/:id", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
-
-
-
 
 module.exports = route;
