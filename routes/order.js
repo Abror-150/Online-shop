@@ -4,6 +4,7 @@ const Order = require("../models/order");
 const OrderItem = require("../models/orderItem");
 const Product = require("../models/product");
 const { orderSchema } = require("../validation/order");
+const User = require("../models/user");
 
 const route = Router();
 
@@ -63,12 +64,25 @@ const route = Router();
  */
 route.get("/", async (req, res) => {
   try {
-    let data = await Order.findAll();
-    res.send(data);
+    let data = await Order.findAll({
+      include: [
+        {
+          model: OrderItem,
+          include: [{ model: Product, attributes: ["id", "name", "price"] }],
+        },
+        {
+          model: User, 
+          attributes: ["id", "userName", "email"],
+        },
+      ],
+    });
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ error: "Server xatosi" });
+    res.status(500).json({ error: "Server xatosi", details: error.message });
   }
 });
+
+
 
 /**
  * @swagger
@@ -151,6 +165,10 @@ route.get("/:id", async (req, res) => {
         {
           model: OrderItem,
           include: [{ model: Product, attributes: ["id", "name", "price"] }],
+        },
+        {
+          model: User, 
+          attributes: ["id", "userName", "email"],
         },
       ],
     });
@@ -339,7 +357,7 @@ route.delete("/:id", async (req, res) => {
       return res.status(404).json({ error: "Buyurtma topilmadi" });
     }
     await data.destroy();
-    res.json({ message: "Buyurtma o‘chirildi" });
+    res.json({ message: "Buyurtma o'chirildi" });
   } catch (error) {
     res.status(500).json({ error: "Server xatosi" });
   }

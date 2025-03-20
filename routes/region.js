@@ -2,6 +2,7 @@ const express = require("express");
 const { Op } = require("sequelize");
 const Region = require("../models/region");
 const { regionSchema } = require("../validation/region");
+const User = require("../models/user");
 const router = express.Router();
 
 /**
@@ -26,6 +27,8 @@ const router = express.Router();
  *       example:
  *         name: "Toshkent"
  */
+
+
 
 /**
  * @swagger
@@ -61,6 +64,41 @@ try {
 }
 );
 
+/**
+ * @swagger
+ * /region/{id}/users:
+ *   get:
+ *     summary: Regionga tegishli userlarni olish
+ *     tags: [Regions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Region ID si
+ *     responses:
+ *       200:
+ *         description: Shu regionga tegishli userlar
+ *       404:
+ *         description: Region topilmadi
+ */
+router.get("/:id/users", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const region = await Region.findByPk(id, {
+      include: [{ model: User }],
+    });
+
+    if (!region) {
+      return res.status(404).json({ message: "Region not found" });
+    }
+
+    res.json(region.users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 /**
  * @swagger
  * /region:
