@@ -99,6 +99,77 @@ router.get("/:id/users", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+/**
+ * @swagger
+ * /region/{id}:
+ *   get:
+ *     summary: Regionni ID bo'yicha olish
+ *     description: Berilgan ID bo‘yicha regionni qaytaradi.
+ *     tags:
+ *       - Regions
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Region ID-si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Region topildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: "Toshkent"
+ *       404:
+ *         description: Region topilmadi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Region topilmadi"
+ *       500:
+ *         description: Server xatosi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Server xatosi"
+ *                 details:
+ *                   type: string
+ *                   example: "Some error message"
+ */
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let region = await Region.findByPk(id);
+
+    if (!region) {
+      return res.status(404).json({ error: "Region topilmadi" });
+    }
+
+    res.json(region);
+  } catch (error) {
+    res.status(500).json({ error: "Server xatosi", details: error.message });
+  }
+});
+
+
+
 /**
  * @swagger
  * /region:

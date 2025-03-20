@@ -295,6 +295,82 @@ route.post("/refresh", async (req, res) => {
  *         description: Foydalanuvchi muvaffaqiyatli yangilandi
  */
 
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: User ID bo'yicha olish
+ *     description: Berilgan ID bo‘yicha userni qaytaradi.
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: User ID-si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: User topildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 userName:
+ *                   type: string
+ *                   example: "Ali"
+ *                 email:
+ *                   type: string
+ *                   example: "ali@example.com"
+ *                 phone:
+ *                   type: string
+ *                   example: "+998901234567"
+ *       404:
+ *         description: User topilmadi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User topilmadi"
+ *       500:
+ *         description: Server xatosi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Server xatosi"
+ *                 details:
+ *                   type: string
+ *                   example: "Some error message"
+ */
+route.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let user = await User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User topilmadi" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Server xatosi", details: error.message });
+  }
+});
+
+
+
 route.patch("/:id", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);

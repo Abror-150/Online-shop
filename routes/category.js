@@ -73,7 +73,7 @@ const { categorySchema } = require("../validation/category");
  *       200:
  *         description: Kategoriyalar ro‘yxati
  *         content:
- *           application/json:
+ *           application/send:
  *             schema:
  *               type: array
  *               items:
@@ -89,20 +89,92 @@ router.get("/", async (req, res) => {
       limit = 10,
     } = req.query;
 
-    const whereClause = search ? { name: { [Op.like]: `%${search}%` } } : {};
+    const filter = search ? { name: { [Op.like]: `%${search}%` } } : {};
 
     const categories = await Category.findAll({
-      where: whereClause,
+      where: filter,
       order: [[sortBy, order.toUpperCase()]],
       limit: parseInt(limit),
       offset: (parseInt(page) - 1) * parseInt(limit),
     });
 
-    res.json(categories);
+    res.send(categories);
   } catch (error) {
-    res.status(500).json({ error: "Server xatosi", details: error.message });
+    res.status(500).send({ error: "Server xatosi", details: error.message });
   }
 });
+
+
+/**
+ * @swagger
+ * /category/{id}:
+ *   get:
+ *     summary: Berilgan ID bo‘yicha kategoriyani olish
+ *     description: ID orqali ma'lum bir kategoriyani qaytaradi.
+ *     tags:
+ *       - Category
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Olish kerak bo'lgan category ID-si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Kategoriya ma'lumotlari
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: "Elektronika"
+ *       404:
+ *         description: Kategoriya topilmadi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Category topilmadi"
+ *       500:
+ *         description: Server xatosi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Server xatosi"
+ *                 details:
+ *                   type: string
+ *                   example: "Some error message"
+ */
+
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let category = await Category.findOne({
+      where: { id },
+    });
+    if (!category) {
+      return res.status(404).send({ error: "Category topilmadi" });
+    }
+    res.send(category);
+  } catch (error) {
+    res.status(500).send({ error: "Server xatosi", details: error.message });
+  }
+});
+
+
 
 /**
  * @swagger
@@ -115,7 +187,7 @@ router.get("/", async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/send:
  *           schema:
  *             $ref: '#/components/schemas/Category'
  *     responses:
@@ -128,20 +200,20 @@ router.post("/", roleAuthMiddleware(["admin"]), async (req, res) => {
   try {
     const { error } = categorySchema.validate(req.body);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      return res.status(400).send({ error: error.details[0].message });
     }
     const { name } = req.body;
     if (!req.body.name) {
       return res
         .status(400)
-        .json({ error: "Kategoriya nomi kiritilishi kerak" });
+        .send({ error: "Kategoriya nomi kiritilishi kerak" });
     }
     const category = await Category.create({ name });
-    res.status(201).json(category);
+    res.status(201).send(category);
   } catch (error) {
     res
       .status(400)
-      .json({ error: "Ma'lumot noto‘g‘ri", details: error.message });
+      .send({ error: "Ma'lumot noto‘g‘ri", details: error.message });
   }
 });
 
@@ -163,7 +235,7 @@ router.post("/", roleAuthMiddleware(["admin"]), async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/send:
  *           schema:
  *             $ref: '#/components/schemas/Category'
  *     responses:
@@ -182,12 +254,12 @@ router.patch(
 
       if (updated) {
         const updatedCategory = await Category.findByPk(id);
-        return res.json(updatedCategory);
+        return res.send(updatedCategory);
       }
 
-      res.status(404).json({ error: "Kategoriya topilmadi" });
+      res.status(404).send({ error: "Kategoriya topilmadi" });
     } catch (error) {
-      res.status(500).json({ error: "Server xatosi", details: error.message });
+      res.status(500).send({ error: "Server xatosi", details: error.message });
     }
   }
 );
@@ -219,12 +291,12 @@ router.delete("/:id", roleAuthMiddleware(["admin"]), async (req, res) => {
     const deleted = await Category.destroy({ where: { id } });
 
     if (deleted) {
-      return res.json({ message: "Kategoriya o‘chirildi" });
+      return res.send({ message: "Kategoriya o‘chirildi" });
     }
 
-    res.status(404).json({ error: "Kategoriya topilmadi" });
+    res.status(404).send({ error: "Kategoriya topilmadi" });
   } catch (error) {
-    res.status(500).json({ error: "Server xatosi", details: error.message });
+    res.status(500).send({ error: "Server xatosi", details: error.message });
   }
 });
 

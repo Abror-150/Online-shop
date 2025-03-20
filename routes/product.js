@@ -131,14 +131,14 @@ router.get("/", async (req, res) => {
       offset,
     });
 
-    res.json({
+    res.send({
       total: totalProducts,
       page: parseInt(page),
       limit: parseInt(limit),
       products,
     });
   } catch (error) {
-    res.status(500).json({ error: "Server xatosi", details: error.message });
+    res.status(500).send({ error: "Server xatosi", details: error.message });
   }
 });
 /**
@@ -152,14 +152,14 @@ router.get("/", async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/send:
  *           schema:
  *             $ref: '#/components/schemas/Product'
  *     responses:
  *       201:
  *         description: Yangi mahsulot yaratildi
  *         content:
- *           application/json:
+ *           application/send:
  *             schema:
  *               $ref: '#/components/schemas/Product'
  */
@@ -167,7 +167,7 @@ router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
   try {
     const { error } = productSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({ error: error.details[0].message });
+      return res.status(400).send({ error: error.details[0].message });
     }
     const userId = req.user.id;
     const { name, description, image, price, categoryId } = req.body;
@@ -181,44 +181,178 @@ router.post("/", roleAuthMiddleware(["admin", "seller"]), async (req, res) => {
       categoryId,
     });
 
-    res.status(201).json(product);
+    res.status(201).send(product);
   } catch (error) {
     res
       .status(400)
-      .json({ error: "Ma'lumot noto‘g‘ri kiritilgan", details: error.message });
+      .send({ error: "Ma'lumot noto'g'ri kiritilgan", details: error.message });
   }
 });
 
 /**
  * @swagger
  * /product/{id}:
- *   put:
+ *   get:
+ *     summary: Mahsulotni ID bo'yicha olish
+ *     description: Berilgan ID bo'yicha bitta mahsulotni chiqaradi.
+ *     tags:
+ *       - Products
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: Mahsulot ID-si
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Mahsulot ma'lumotlari
+ *         content:
+ *           application/send:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *                 name:
+ *                   type: string
+ *                   example: "Smartfon"
+ *                 description:
+ *                   type: string
+ *                   example: "Yangi model smartfon"
+ *                 image:
+ *                   type: string
+ *                   example: "https://example.com/image.jpg"
+ *                 userId:
+ *                   type: integer
+ *                   example: 2
+ *                 price:
+ *                   type: integer
+ *                   example: 250000
+ *                 categoryId:
+ *                   type: integer
+ *                   example: 3
+ *       404:
+ *         description: Mahsulot topilmadi
+ *         content:
+ *           application/send:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Mahsulot topilmadi"
+ *       500:
+ *         description: Server xatosi
+ *         content:
+ *           application/send:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Server xatosi"
+ *                 details:
+ *                   type: string
+ *                   example: "Some error message"
+ */
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    let product = await Product.findByPk(id);
+
+    if (!product) {
+      return res.status(404).send({ error: "Mahsulot topilmadi" });
+    }
+
+    res.send(product);
+  } catch (error) {
+    res.status(500).send({ error: "Server xatosi", details: error.message });
+  }
+});
+
+
+
+
+/**
+ * @swagger
+ * /product/{id}:
+ *   patch:
  *     summary: Mahsulot ma'lumotlarini yangilash
- *     tags: [Products]
+ *     description: Berilgan ID bo'yicha mahsulotni qisman yangilaydi.
+ *     tags:
+ *       - Products
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
+ *         description: Yangilanishi kerak bo'lgan mahsulot ID-si
  *         schema:
  *           type: integer
- *         description: Yangilanayotgan mahsulotning ID si
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         application/send:
  *           schema:
- *             $ref: '#/components/schemas/Product'
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "Yangi mahsulot nomi"
+ *               description:
+ *                 type: string
+ *                 example: "Bu mahsulot haqida batafsil ma'lumot"
+ *               image:
+ *                 type: string
+ *                 example: "https://example.com/image.jpg"
+ *               userId:
+ *                 type: integer
+ *                 example: 1
+ *               price:
+ *                 type: integer
+ *                 example: 250000
+ *               categoryId:
+ *                 type: integer
+ *                 example: 2
  *     responses:
  *       200:
  *         description: Mahsulot muvaffaqiyatli yangilandi
  *         content:
- *           application/json:
+ *           application/send:
  *             schema:
- *               $ref: '#/components/schemas/Product'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Mahsulot yangilandi"
+ *       404:
+ *         description: Mahsulot topilmadi
+ *         content:
+ *           application/send:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Mahsulot topilmadi"
+ *       500:
+ *         description: Server xatosi
+ *         content:
+ *           application/send:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Server xatosi"
+ *                 details:
+ *                   type: string
+ *                   example: "Some error message"
  */
-router.put(
+router.patch(
   "/:id",
   roleAuthMiddleware(["seller", "admin", "super_admin"]),
   async (req, res) => {
@@ -227,21 +361,17 @@ router.put(
       const [updated] = await Product.update(req.body, { where: { id } });
 
       if (updated) {
-        const updatedProduct = await Product.findByPk(id, {
-          include: [
-            { model: User, attributes: ["id", "userName", "email"] },
-            { model: Category, attributes: ["id", "name"] },
-          ],
-        });
-        res.json(updatedProduct);
+        res.send({ message: "Mahsulot yangilandi" });
       } else {
-        res.status(404).json({ error: "Mahsulot topilmadi" });
+        res.status(404).send({ error: "Mahsulot topilmadi" });
       }
     } catch (error) {
-      res.status(500).json({ error: "Server xatosi", details: error.message });
+      res.status(500).send({ error: "Server xatosi", details: error.message });
     }
   }
 );
+
+
 
 /**
  * @swagger
@@ -273,12 +403,12 @@ router.delete(
       const deleted = await Product.destroy({ where: { id } });
 
       if (deleted) {
-        res.json({ message: "Mahsulot o‘chirildi" });
+        res.send({ message: "Mahsulot o‘chirildi" });
       } else {
-        res.status(404).json({ error: "Mahsulot topilmadi" });
+        res.status(404).send({ error: "Mahsulot topilmadi" });
       }
     } catch (error) {
-      res.status(500).json({ error: "Server xatosi", details: error.message });
+      res.status(500).send({ error: "Server xatosi", details: error.message });
     }
   }
 );

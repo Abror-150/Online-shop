@@ -5,6 +5,7 @@ const OrderItem = require("../models/orderItem");
 const Product = require("../models/product");
 const { orderSchema } = require("../validation/order");
 const User = require("../models/user");
+const roleAuthMiddleware = require("../middlewares/auth");
 
 const route = Router();
 
@@ -264,7 +265,7 @@ route.get("/:id", async (req, res) => {
  */
 
 
-route.post("/", async (req, res) => {
+route.post("/",roleAuthMiddleware(["admin","user"]), async (req, res) => {
   try {
     const { userId, items } = req.body; 
 
