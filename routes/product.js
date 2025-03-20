@@ -6,7 +6,6 @@ const Category = require("../models/category");
 const roleAuthMiddleware = require("../middlewares/auth");
 const { productSchema } = require("../validation/product");
 const router = express.Router();
-
 /**
  * @swagger
  * tags:
@@ -14,43 +13,6 @@ const router = express.Router();
  *   description: Mahsulotlar bilan ishlash API
  */
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     Product:
- *       type: object
- *       required:
- *         - name
- *         - price
- *         - categoryId
- *       properties:
- *         id:
- *           type: integer
- *           description: Mahsulotning unikal ID si
- *         name:
- *           type: string
- *           description: Mahsulot nomi
- *         description:
- *           type: string
- *           description: Mahsulot tavsifi
- *         image:
- *           type: string
- *           description: Mahsulot rasmi URL manzili
- *         price:
- *           type: number
- *           description: Mahsulot narxi
- *         categoryId:
- *           type: integer
- *           description: Mahsulot kategoriyasi ID si
- *       example:
- *         id: 1
- *         name: "Laptop"
- *         description: "Yangi zamonaviy laptop"
- *         image: "https://example.com/image.jpg"
- *         price: 1200.50
- *         categoryId: 2
- */
 /**
  * @swagger
  * /product:
@@ -68,6 +30,11 @@ const router = express.Router();
  *         schema:
  *           type: integer
  *         description: Mahsulot kategoriyasi ID si
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: integer
+ *         description: Mahsulot egasining ID si
  *       - in: query
  *         name: minPrice
  *         schema:
@@ -109,6 +76,7 @@ router.get("/", async (req, res) => {
     const {
       search,
       categoryId,
+      userId,
       minPrice,
       maxPrice,
       sortBy = "createdAt",
@@ -120,6 +88,7 @@ router.get("/", async (req, res) => {
     const whereClause = {};
     if (search) whereClause.name = { [Op.like]: `%${search}%` };
     if (categoryId) whereClause.categoryId = categoryId;
+    if (userId) whereClause.userId = userId;
     if (minPrice) whereClause.price = { [Op.gte]: parseFloat(minPrice) };
     if (maxPrice)
       whereClause.price = {

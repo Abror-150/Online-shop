@@ -28,9 +28,6 @@ const route = Router();
  *       required:
  *         - items
  *       properties:
- *         id:
- *           type: integer
- *           description: Buyurtma ID si
  *         items:
  *           type: array
  *           items:
@@ -43,7 +40,6 @@ const route = Router();
  *                 type: integer
  *                 description: Mahsulot soni
  *       example:
- *         id: 1
  *         items:
  *           - productName: "Noutbuk"
  *             count: 2

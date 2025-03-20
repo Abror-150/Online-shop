@@ -20,14 +20,10 @@ const router = express.Router();
  *       required:
  *         - name
  *       properties:
- *         id:
- *           type: integer
- *           description: Hudud ID si
  *         name:
  *           type: string
  *           description: Hudud nomi
  *       example:
- *         id: 1
  *         name: "Toshkent"
  */
 
