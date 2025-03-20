@@ -26,7 +26,7 @@ const swaggerOptions = {
     },
     security: [{ BearerAuth: [] }],
   },
-  apis: ["./routes/*.js"],
+  apis: ["./routes/*.js","./upload.js"],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
@@ -34,5 +34,8 @@ const swaggerDocs = swaggerJsDoc(swaggerOptions);
 const setupSwagger = (app) => {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 };
+
+
+
 
 module.exports = setupSwagger;

@@ -99,6 +99,8 @@ router.get("/", async (req, res) => {
     });
     res.json(comments);
   } catch (error) {
+    console.log(error);
+    
     res.status(500).json({ error: "Server xatosi" });
   }
 });
