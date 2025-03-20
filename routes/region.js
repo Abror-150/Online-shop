@@ -20,14 +20,10 @@ const router = express.Router();
  *       required:
  *         - name
  *       properties:
- *         id:
- *           type: integer
- *           description: Hudud ID si
  *         name:
  *           type: string
  *           description: Hudud nomi
  *       example:
- *         id: 1
  *         name: "Toshkent"
  */
 
@@ -48,8 +44,11 @@ const router = express.Router();
  *         description: Yangi hudud yaratildi
  */
 router.post("/", async (req, res) => {
+<<<<<<< HEAD
 
     
+=======
+>>>>>>> 74568cf0c1dd31c16878ecee724eb862c54971b8
   try {
     const { error } = regionSchema.validate(req.body);
     if (error) {

@@ -30,9 +30,6 @@ const router = express.Router();
  *         - star
  *         - message
  *       properties:
- *         id:
- *           type: integer
- *           description: Izoh ID si
  *         userId:
  *           type: integer
  *           description: Foydalanuvchi ID si
@@ -46,7 +43,6 @@ const router = express.Router();
  *           type: string
  *           description: Foydalanuvchi izohi
  *       example:
- *         id: 1
  *         userId: 2
  *         productId: 3
  *         star: 5
