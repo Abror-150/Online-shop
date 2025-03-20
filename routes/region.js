@@ -44,25 +44,20 @@ const router = express.Router();
  *         description: Yangi hudud yaratildi
  */
 router.post("/", async (req, res) => {
-<<<<<<< HEAD
-
-    
-=======
->>>>>>> 74568cf0c1dd31c16878ecee724eb862c54971b8
-  try {
-    const { error } = regionSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ error: error.details[0].message });
-    }
-    const { name } = req.body;
-    if (!name)
-      return res.status(400).json({ message: "Region name is required" });
-
-    const region = await Region.create(req.body);
-    res.status(201).json({ message: "Region created successfully", region });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+try {
+  const { error } = regionSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
   }
+  const { name } = req.body;
+  if (!name)
+    return res.status(400).json({ message: "Region name is required" });
+
+  const region = await Region.create(req.body);
+  res.status(201).json({ message: "Region created successfully", region });
+} catch (error) {
+  res.status(500).json({ message: error.message });
+}
 }
 );
 

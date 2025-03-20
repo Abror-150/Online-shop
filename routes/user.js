@@ -243,5 +243,73 @@ route.post("/refresh", async (req, res) => {
     console.log(error);
   }
 });
+/**
+ * @swagger
+ * /user/{id}:
+ *   patch:
+ *     summary: Foydalanuvchini yangilash
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Foydalanuvchi ID si
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/User'
+ *     responses:
+ *       200:
+ *         description: Foydalanuvchi muvaffaqiyatli yangilandi
+ */
+
+route.patch("/:id", async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    await user.update(req.body);
+    res.json({ message: "User updated successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /user/{id}:
+ *   delete:
+ *     summary: Foydalanuvchini o‘chirish
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Foydalanuvchi ID si
+ *     responses:
+ *       200:
+ *         description: Foydalanuvchi muvaffaqiyatli o‘chirildi
+ */
+route.delete("/:id", async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    await user.destroy();
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+
 
 module.exports = route;
