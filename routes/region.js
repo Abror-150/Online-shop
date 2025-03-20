@@ -7,9 +7,6 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
     try {
-        const { name } = regionValidation.req.body;
-        if (!name) return res.status(400).json({ message: "Region name is required" });
-
         const region = await Region.create({ name });
         res.status(201).json({ message: "Region created successfully", region });
     } catch (error) {
