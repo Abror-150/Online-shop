@@ -5,7 +5,7 @@ const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "E-commerce API",
+      title: "Online-Shop API",
       version: "1.0.0",
       description: "E-commerce loyihasi uchun API hujjati",
     },

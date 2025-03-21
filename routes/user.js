@@ -3,6 +3,8 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const { totp } = require("otplib");
 const jwt = require("jsonwebtoken");
+const { Op } = require("sequelize");
+
 const { userSchema } = require("../validation/user");
 const {
   sendEmail,
@@ -68,6 +70,182 @@ route.get("/", async (req, res) => {
 
 /**
  * @swagger
+ * tags:
+ *   name: Users
+ *   description: Foydalanuvchilar bilan ishlash
+ */
+
+/**
+ * @swagger
+ * /user/me:
+ *   get:
+ *     summary: Foydalanuvchi akkaunt ma’lumotlarini olish
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Foydalanuvchi ma’lumotlari
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 userName:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 image:
+ *                   type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *       401:
+ *         description: Avtorizatsiya talab qilinadi
+ *       404:
+ *         description: Foydalanuvchi topilmadi
+ *       500:
+ *         description: Server xatosi
+ */
+
+route.get("/me", roleAuthMiddleware(["user", "admin"]), async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Token yaroqsiz yoki mavjud emas" });
+    }
+    const userId = req.user.id;
+    const user = await User.findByPk(userId, {
+      attributes: ["id", "userName", "email", "image", "createdAt"],
+    });
+    if (!user)
+      return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Server xatosi", details: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /user/me:
+ *   patch:
+ *     summary: Foydalanuvchi ma’lumotlarini yangilash
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userName:
+ *                 type: string
+ *                 example: "Ali Valiyev"
+ *               email:
+ *                 type: string
+ *                 example: "ali@example.com"
+ *     responses:
+ *       200:
+ *         description: Ma’lumotlar yangilandi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Ma'lumotlar yangilandi"
+ *       400:
+ *         description: Noto‘g‘ri so‘rov ma’lumotlari
+ *       401:
+ *         description: Avtorizatsiya talab qilinadi
+ *       500:
+ *         description: Server xatosi
+ */
+
+route.patch("/me", roleAuthMiddleware(["user", "admin"]), async (req, res) => {
+  try {
+    const { userName, email } = req.body;
+
+    await User.update({ userName, email }, { where: { id: req.user.id } });
+
+    res.json({ message: "Ma'lumotlar yangilandi" });
+  } catch (error) {
+    res.status(500).json({ error: "Server xatosi", details: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /user/me/password:
+ *   patch:
+ *     summary: Parolni o‘zgartirish
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *                 example: "eski parolni kiriting"
+ *               newPassword:
+ *                 type: string
+ *                 example: "yangi parolni kiriting"
+ *     responses:
+ *       200:
+ *         description: Parol muvaffaqiyatli o‘zgartirildi
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Parol muvaffaqiyatli o'zgartirildi"
+ *       400:
+ *         description: Eski parol noto‘g‘ri
+ *       401:
+ *         description: Avtorizatsiya talab qilinadi
+ *       500:
+ *         description: Server xatosi
+ */
+
+route.patch(
+  "/me/password",
+  roleAuthMiddleware(["admin", "user"]),
+  async (req, res) => {
+    try {
+      const { oldPassword, newPassword } = req.body;
+      const user = await User.findByPk(req.user.id);
+
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch)
+        return res.status(400).json({ error: "Eski parol noto'g'ri" });
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await User.update(
+        { password: hashedPassword },
+        { where: { id: user.id } }
+      );
+
+      res.json({ message: "Parol muvaffaqiyatli o'zgartirildi" });
+    } catch (error) {
+      res.status(500).json({ error: "Server xatosi", details: error.message });
+    }
+  }
+);
+
+/**
+ * @swagger
  * /user/send-otp:
  *   post:
  *     summary: Foydalanuvchiga OTP yuborish
@@ -128,7 +306,7 @@ route.post("/verify-otp", async (req, res) => {
   try {
     let match = totp.verify({ token: otp, secret: phone + "lorem" });
     if (!match) {
-      return res.status(402).send({ message: "wrong error" });
+      return res.status(402).send({ message: "otp or phone notogri" });
     }
     res.send(match);
   } catch (error) {
@@ -180,7 +358,11 @@ route.post("/register", async (req, res) => {
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
-    let user = await User.findOne({ where: { userName } });
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [{ userName }, { email }],
+      },
+    });
     if (user) {
       return res.status(401).send({ message: "user already exists" });
     }
@@ -381,7 +563,6 @@ route.get("/:id/orders", async (req, res) => {
         },
       ],
     });
-
 
     res.json(orders);
   } catch (error) {

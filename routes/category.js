@@ -104,7 +104,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-
 /**
  * @swagger
  * /category/{id}:
@@ -174,8 +173,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-
-
 /**
  * @swagger
  * /category:
@@ -187,7 +184,7 @@ router.get("/:id", async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/send:
+ *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/Category'
  *     responses:
@@ -198,17 +195,13 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", roleAuthMiddleware(["admin"]), async (req, res) => {
   try {
+    console.log(req.body);
+    
     const { error } = categorySchema.validate(req.body);
     if (error) {
       return res.status(400).send({ error: error.details[0].message });
     }
-    const { name } = req.body;
-    if (!req.body.name) {
-      return res
-        .status(400)
-        .send({ error: "Kategoriya nomi kiritilishi kerak" });
-    }
-    const category = await Category.create({ name });
+    const category = await Category.create(req.body);
     res.status(201).send(category);
   } catch (error) {
     res
