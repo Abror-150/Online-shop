@@ -16,6 +16,7 @@ const Order = require("../models/order");
 const OrderItem = require("../models/orderItem");
 const Product = require("../models/product");
 const roleAuthMiddleware = require("../middlewares/auth");
+const { log } = require("winston");
 const route = Router();
 
 /**
@@ -112,20 +113,30 @@ route.get("/", async (req, res) => {
 
 route.get("/me", roleAuthMiddleware(["user", "admin"]), async (req, res) => {
   try {
+    console.log("Middleware orqali kelgan user:", req.user); 
+
     if (!req.user) {
       return res.status(401).json({ error: "Token yaroqsiz yoki mavjud emas" });
     }
+
     const userId = req.user.id;
+    console.log("User ID:", userId); 
+
     const user = await User.findByPk(userId, {
-      attributes: ["id", "userName", "email", "image", "createdAt"],
+      attributes: ["id", "userName", "email", "image", "lastIp"],
     });
-    if (!user)
-      return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+
+    console.log("User ma'lumotlari:", user); 
+
+    if (!user) return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
+
     res.json(user);
   } catch (error) {
+    console.error("Xatolik:", error); 
     res.status(500).json({ error: "Server xatosi", details: error.message });
   }
 });
+
 
 /**
  * @swagger
@@ -231,9 +242,9 @@ route.patch(
       if (!isMatch)
         return res.status(400).json({ error: "Eski parol noto'g'ri" });
 
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const hash = await bcrypt.hash(newPassword, 10);
       await User.update(
-        { password: hashedPassword },
+        { password: hash },
         { where: { id: user.id } }
       );
 
@@ -412,19 +423,30 @@ route.post("/login", async (req, res) => {
   try {
     let user = await User.findOne({ where: { userName } });
     if (!user) {
-      return res.status(404).send({ message: "user not found" });
+      return res.status(404).json({ message: "User not found" });
     }
+
     let match = bcrypt.compareSync(password, user.password);
     if (!match) {
-      return res.status(401).send({ message: "wrong password error" });
+      return res.status(401).json({ message: "Wrong password error" });
     }
+
+    let userIp = req.ip; // IP manzilini olish
+    console.log("User IP:", userIp); // Debug
+
+    // IP-ni yangilash
+    await User.update({ lastIp: userIp }, { where: { id: user.id } });
+
     let accesToken = getToken(user.id, user.role);
     let refreToken = refreshToken(user);
-    res.send({ accesToken, refreToken });
+
+    res.json({ accesToken, refreToken });
   } catch (error) {
-    console.log(error);
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 /**
  * @swagger
