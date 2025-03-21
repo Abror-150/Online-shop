@@ -28,8 +28,6 @@ const router = express.Router();
  *         name: "Toshkent"
  */
 
-
-
 /**
  * @swagger
  * /region:
@@ -47,22 +45,21 @@ const router = express.Router();
  *         description: Yangi hudud yaratildi
  */
 router.post("/", async (req, res) => {
-try {
-  const { error } = regionSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ error: error.details[0].message });
-  }
-  const { name } = req.body;
-  if (!name)
-    return res.status(400).json({ message: "Region name is required" });
+  try {
+    const { error } = regionSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+    const { name } = req.body;
+    if (!name)
+      return res.status(400).json({ message: "Region name is required" });
 
-  const region = await Region.create(req.body);
-  res.status(201).json({ message: "Region created successfully", region });
-} catch (error) {
-  res.status(500).json({ message: error.message });
-}
-}
-);
+    const region = await Region.create(req.body);
+    res.status(201).json({ message: "Region created successfully", region });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 /**
  * @swagger
@@ -93,7 +90,11 @@ router.get("/:id/users", async (req, res) => {
     if (!region) {
       return res.status(404).json({ message: "Region not found" });
     }
-
+    if (!region.users || region.users.length === 0) {
+      return res
+        .status(200)
+        .json({ message: "No users found for this region" });
+    }
     res.json(region.users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -167,8 +168,6 @@ router.get("/:id", async (req, res) => {
     res.status(500).json({ error: "Server xatosi", details: error.message });
   }
 });
-
-
 
 /**
  * @swagger
