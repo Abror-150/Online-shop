@@ -4,6 +4,7 @@ const User = require("../models/user");
 const Comment = require("../models/comment");
 const { commentSchema } = require("../validation/comment");
 const { Op } = require("sequelize");
+const roleAuthMiddleware = require("../middlewares/auth");
 const router = express.Router();
 
 /**
@@ -25,14 +26,12 @@ const router = express.Router();
  *     Comment:
  *       type: object
  *       required:
- *         - userId
+ *         
  *         - productId
  *         - star
  *         - message
  *       properties:
- *         userId:
- *           type: integer
- *           description: Foydalanuvchi ID si
+ *        
  *         productId:
  *           type: integer
  *           description: Mahsulot ID si
@@ -43,7 +42,7 @@ const router = express.Router();
  *           type: string
  *           description: Foydalanuvchi izohi
  *       example:
- *         userId: 2
+ *        
  *         productId: 3
  *         star: 5
  *         message: "Zo'r mahsulot!"
@@ -121,17 +120,18 @@ router.get("/", async (req, res) => {
  *       400:
  *         description: Xatolik, noto‘g‘ri so‘rov
  */
-router.post("/", async (req, res) => {
+router.post("/",roleAuthMiddleware(["user","admin"]), async (req, res) => {
   try {
     const { error } = commentSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
-    const { userId, productId, star, message } = req.body;
+    const {productId, star, message } = req.body;
+    const userId = req.user.id
     const comment = await Comment.create({ userId, productId, star, message });
     res.status(201).json(comment);
   } catch (error) {
-    res.status(400).json({ error: "Ma'lumot noto‘g‘ri kiritilgan" });
+    res.status(400).json({ error: "Ma'lumot noto'g'ri kiritilgan" });
   }
 });
 
@@ -162,7 +162,7 @@ router.post("/", async (req, res) => {
  *       404:
  *         description: Izoh topilmadi
  */
-router.patch("/:id", async (req, res) => {
+router.patch("/:id",roleAuthMiddleware(['admin','user']), async (req, res) => {
   try {
     const { id } = req.params;
     const one = await Comment.findByPk(id);
@@ -194,13 +194,13 @@ router.patch("/:id", async (req, res) => {
  *       404:
  *         description: Izoh topilmadi
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id",roleAuthMiddleware(['user','admin']), async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await Comment.destroy({ where: { id } });
 
     if (deleted) {
-      res.json({ message: "Izoh o‘chirildi" });
+      res.json({ message: "Izoh o'chirildi" });
     } else {
       res.status(404).json({ error: "Izoh topilmadi" });
     }

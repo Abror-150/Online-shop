@@ -1,10 +1,7 @@
 const Joi = require("joi");
 
 const commentSchema = Joi.object({
-  userId: Joi.number().integer().required().messages({
-    "number.base": "Foydalanuvchi ID raqam bo‘lishi kerak",
-    "any.required": "Foydalanuvchi ID majburiy",
-  }),
+  
   productId: Joi.number().integer().optional().messages({
     "number.base": "Mahsulot ID raqam bo‘lishi kerak",
   }),
