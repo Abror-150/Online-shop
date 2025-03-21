@@ -1,8 +1,10 @@
 const express = require("express");
+const { Sequelize } = require("sequelize");
 const { Op } = require("sequelize");
 const Product = require("../models/product");
 const User = require("../models/user");
 const Category = require("../models/category");
+const Comment = require("../models/comment");
 const roleAuthMiddleware = require("../middlewares/auth");
 const { productSchema } = require("../validation/product");
 const router = express.Router();
@@ -93,6 +95,7 @@ const router = express.Router();
  *       200:
  *         description: Mahsulotlar ro‘yxati
  */
+
 router.get("/", async (req, res) => {
   try {
     const {
@@ -120,6 +123,7 @@ router.get("/", async (req, res) => {
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const totalProducts = await Product.count({ where: whereClause });
+
     const products = await Product.findAll({
       where: whereClause,
       include: [
@@ -131,16 +135,39 @@ router.get("/", async (req, res) => {
       offset,
     });
 
+    const productIds = products.map((p) => p.id);
+    const avgStars = await Comment.findAll({
+      attributes: [
+        "productId",
+        [Sequelize.fn("AVG", Sequelize.col("star")), "avgStar"],
+      ],
+      where: { productId: productIds },
+      group: ["productId"],
+      raw: true,
+    });
+
+    const avgStarMap = avgStars.reduce((acc, item) => {
+      acc[item.productId] = parseFloat(item.avgStar).toFixed(1);
+      return acc;
+    }, {});
+
+    const productsWithStars = products.map((product) => ({
+      ...product.toJSON(),
+      avgStar: avgStarMap[product.id],
+    }));
+
     res.send({
       total: totalProducts,
       page: parseInt(page),
       limit: parseInt(limit),
-      products,
+      products: productsWithStars,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).send({ error: "Server xatosi", details: error.message });
   }
 });
+
 /**
  * @swagger
  * /product:
@@ -272,9 +299,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-
-
-
 /**
  * @swagger
  * /product/{id}:
@@ -370,8 +394,6 @@ router.patch(
     }
   }
 );
-
-
 
 /**
  * @swagger
