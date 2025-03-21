@@ -109,9 +109,7 @@ route.get("/", async (req, res) => {
  *                 id:
  *                   type: integer
  *                   description: Buyurtma ID si
- *                 userId:
- *                   type: integer
- *                   description: Buyurtmani yaratgan foydalanuvchi ID si
+ *                
  *                 createdAt:
  *                   type: string
  *                   format: date-time
@@ -199,12 +197,9 @@ route.get("/:id", async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - userId
+ *               
  *               - items
  *             properties:
- *               userId:
- *                 type: integer
- *                 description: Buyurtmani yaratgan foydalanuvchi ID si
  *               items:
  *                 type: array
  *                 description: Buyurtma ichidagi mahsulotlar
@@ -267,8 +262,8 @@ route.get("/:id", async (req, res) => {
 
 route.post("/",roleAuthMiddleware(["admin","user"]), async (req, res) => {
   try {
-    const { userId, items } = req.body; 
-
+    const { items } = req.body; 
+    const userId = req.user.id
     const order = await Order.create({ userId });
 
     const orderItems = items.map((item) => ({
