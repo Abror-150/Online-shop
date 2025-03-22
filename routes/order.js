@@ -3,7 +3,6 @@ const rouleAuthmiddleware = require("../middlewares/auth");
 const Order = require("../models/order");
 const OrderItem = require("../models/orderItem");
 const Product = require("../models/product");
-const { orderSchema } = require("../validation/order");
 const User = require("../models/user");
 const roleAuthMiddleware = require("../middlewares/auth");
 

@@ -195,18 +195,22 @@ router.get("/:id", async (req, res) => {
  */
 router.post("/", roleAuthMiddleware(["admin"]), async (req, res) => {
   try {
-    console.log(req.body);
     
     const { error } = categorySchema.validate(req.body);
     if (error) {
       return res.status(400).send({ error: error.details[0].message });
+    }
+    const {name} = req.body
+    const oldCategory = await Category.findOne({where:{name}})
+    if(oldCategory){
+      return res.status(400).send({message:"category already exists"})
     }
     const category = await Category.create(req.body);
     res.status(201).send(category);
   } catch (error) {
     res
       .status(400)
-      .send({ error: "Ma'lumot noto‘g‘ri", details: error.message });
+      .send({ error: "Ma'lumot noto'g'ri", details: error.message });
   }
 });
 

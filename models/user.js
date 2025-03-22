@@ -41,6 +41,12 @@ const User = db.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    lastIp: {
+      type: DataTypes.STRING,
+    
+    },
+    
+
   },
   { timestamps: false }
 );

@@ -113,21 +113,15 @@ route.get("/", async (req, res) => {
 
 route.get("/me", roleAuthMiddleware(["user", "admin"]), async (req, res) => {
   try {
-    console.log("Middleware orqali kelgan user:", req.user); 
 
     if (!req.user) {
       return res.status(401).json({ error: "Token yaroqsiz yoki mavjud emas" });
     }
-
     const userId = req.user.id;
-    console.log("User ID:", userId); 
 
     const user = await User.findByPk(userId, {
       attributes: ["id", "userName", "email", "image", "lastIp"],
     });
-
-    console.log("User ma'lumotlari:", user); 
-
     if (!user) return res.status(404).json({ error: "Foydalanuvchi topilmadi" });
 
     res.json(user);
@@ -375,7 +369,7 @@ route.post("/register", async (req, res) => {
       },
     });
     if (user) {
-      return res.status(401).send({ message: "user already exists" });
+      return res.status(401).send({ message: "Email or Username already exists" });
     }
     let hash = bcrypt.hashSync(password, 10);
     let newUser = await User.create({
@@ -431,11 +425,12 @@ route.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Wrong password error" });
     }
 
-    let userIp = req.ip; // IP manzilini olish
-    console.log("User IP:", userIp); // Debug
-
-    // IP-ni yangilash
-    await User.update({ lastIp: userIp }, { where: { id: user.id } });
+    let userIp = req.ip; 
+    
+    
+    await User.update({lastIp:userIp }, { where: { id: user.id } });
+    
+    
 
     let accesToken = getToken(user.id, user.role);
     let refreToken = refreshToken(user);
